@@ -5,6 +5,7 @@ from __future__ import annotations
 import atexit
 import click
 import glob
+from colorama import Fore, Style
 from typing import TYPE_CHECKING
 from pathlib import Path
 
@@ -50,6 +51,56 @@ def scan_for_local_models() -> list[str]:
 
 
 
+# A green, C blue, G yellow, T red: the palette sequence viewers (IGV, Sanger
+# chromatograms) use, so the bases read the way people are used to. The methyl
+# marks get a colour of their own and the backbone is dimmed, so the eye lands
+# on the bases first and on the methylation second.
+BASE_COLOR = {
+    'A': Fore.GREEN,
+    'C': Fore.BLUE + Style.BRIGHT,
+    'G': Fore.YELLOW,
+    'T': Fore.RED,
+    '*': Fore.MAGENTA + Style.BRIGHT,
+    '-': Style.DIM,
+}
+
+HELIX = [
+    "   A--T",
+    "   A--T",
+    "  *C--G",
+    "   G--C*",
+    "   T--A",
+    "   A--T",
+]
+
+
+def colorize_helix(line):
+    """Colour one helix line per character; spaces and padding stay untouched."""
+    return "".join(f"{BASE_COLOR[c]}{c}{Style.RESET_ALL}" if c in BASE_COLOR else c
+                   for c in line)
+
+
+def render_logo():
+    """The helix with the title block beside it, as one string.
+
+    Helix and text are joined here rather than written out as one literal, so
+    the text column cannot drift when a helix line changes width (the methyl
+    marks make the lines unequal).
+    """
+    beside = [
+        "",
+        f"{Style.BRIGHT}COGNITION v{__version__}{Style.RESET_ALL}",
+        "",
+        "Objective DNA methylation based overall",
+        "survival prediction of IDH mutant gliomas",
+        "",
+    ]
+    # padded before colouring: escape codes would otherwise count towards the
+    # column width and push the text out of line
+    return "\n".join((colorize_helix(h.ljust(12)) + t).rstrip()
+                     for h, t in zip(HELIX, beside))
+
+
 # Printed on the way out. That covers every subcommand, a run that crashes, and
 # `--help` -- which click renders and exits on its own, before any code here
 # gets a turn.
@@ -63,12 +114,7 @@ def main(ctx):
     if ctx.invoked_subcommand is not None:
         return
     click.echo(f"""
-   A--T
-   A--T       COGNITION v{__version__}
-  *C--G
-   G--C*     Objective DNA methylation based overall
-   T--A       survival prediction of IDH mutant gliomas
-   A--T
+{render_logo()}
 
 Based on Illumina DNA methylation arrays, this application can predict:
 

@@ -35,7 +35,7 @@ DISCLAIMER = (
     "------------------------------------------------------------------------\n"
     "\n"
     "Written, developed and (C) by Dr. Youri Hoogstate and Dr. Richard Schoonhoven\n"
-    f"<{GITHUB_URL}>"
+    f"<{GITHUB_URL}>\n"
 )
 
 
