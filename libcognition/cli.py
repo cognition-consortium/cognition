@@ -74,6 +74,22 @@ HELIX = [
 ]
 
 
+# A backronym: the capitals spell COGNITION, and they are the only capitals in
+# it, which is what lets highlight_acronym() find them by case alone. The colour
+# is an accent, not the carrier -- it is stripped when output is not a terminal,
+# so the capitals have to stand on their own.
+TAGLINE = [
+    "isoCitrate dehydrOGenase mutaNt glIoma",
+    "objecTIve tumOr gradiNg",
+]
+
+
+def highlight_acronym(line):
+    """Lift the capitals that spell COGNITION out of the tagline."""
+    return "".join(f"{Fore.CYAN}{Style.BRIGHT}{c}{Style.RESET_ALL}" if c.isupper() else c
+                   for c in line)
+
+
 def colorize_helix(line):
     """Colour one helix line per character; spaces and padding stay untouched."""
     return "".join(f"{BASE_COLOR[c]}{c}{Style.RESET_ALL}" if c in BASE_COLOR else c
@@ -91,8 +107,8 @@ def render_logo():
         "",
         f"{Style.BRIGHT}COGNITION v{__version__}{Style.RESET_ALL}",
         "",
-        "Objective DNA methylation based overall",
-        "survival prediction of IDH mutant gliomas",
+        highlight_acronym(TAGLINE[0]),
+        highlight_acronym(TAGLINE[1]),
         "",
     ]
     # padded before colouring: escape codes would otherwise count towards the
@@ -113,15 +129,24 @@ atexit.register(print, "\n" + DISCLAIMER)
 def main(ctx):
     if ctx.invoked_subcommand is not None:
         return
+    # asked of click rather than written out, so a subcommand added later shows
+    # up here without anyone remembering to update the banner
+    formatter = ctx.make_formatter()
+    ctx.command.format_commands(ctx, formatter)
+    commands = formatter.getvalue().rstrip()
+
     click.echo(f"""
 {render_logo()}
 
 Based on Illumina DNA methylation arrays, this application can predict:
-
   - prognosis of several types of brain tumor(s)
   - the sex of the sample
   - the tumor subtype needed for plotting appropriate reference data
-    or warn if for the predicted subtype no survival data was fitted""")
+    or warn if for the predicted subtype no survival data was fitted
+
+{commands}
+
+Run 'cognition --help' for all options.""")
 
 
 @main.command(name="list")
