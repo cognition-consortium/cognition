@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="COGNITION - isoCitrate dehydrOGenase mutaNt glIoma objecTIve tumOr gradiNg" width="380">
+  <img src="assets/logo.png" alt="COGNITION - isoCitrate dehydrOGenase mutaNt glIoma objecTIve tumOr gradiNg" width="380">
 </p>
 
 <p align="center">
