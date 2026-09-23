@@ -1,6 +1,14 @@
-# COGNITION
+<p align="center">
+  <img src="logo.png" alt="COGNITION - isoCitrate dehydrOGenase mutaNt glIoma objecTIve tumOr gradiNg" width="380">
+</p>
 
-**COGNITION** — **isoCitrate dehydrOGenase mutaNt glIoma objecTIve tumOr gradiNg**
+<p align="center">
+  <b>isoCitrate dehydrOGenase mutaNt glIoma objecTIve tumOr gradiNg</b>
+</p>
+
+<p align="center">
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.12%2B-blue?logo=python&logoColor=white" alt="Python 3.12+"></a>
+</p>
 
 A Python package for methylation-based tumor classification and survival prediction using Illumina DNA methylation arrays. COGNITION predicts prognosis of brain tumor subtypes, sample sex, and includes survival analysis using various statistical and deep learning models.
 
