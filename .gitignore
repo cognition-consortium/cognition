@@ -2,7 +2,8 @@ assets/models/
 *.egg-info
 __pycache__
 tests/data/
-*.pdf
+/*.pdf
 /data
-*.txt
+/*.txt
 tests/data
+/*.csv

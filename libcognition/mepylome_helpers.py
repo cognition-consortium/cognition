@@ -12,7 +12,7 @@ where they write output.
 All array types are run on hg38:
 
 * **epic** / **450k** use the custom hg38 manifests in
-  ``data/mepylome_manifest_files_hg38/`` (drop-in copies of the mepylome
+  ``<ASSETS_PATH>/reference/`` (drop-in copies of the mepylome
   processed manifests with Chromosome/Start/End replaced by hg38 coordinates;
   see ``scripts/make_hg38_manifest.py``). Each is accompanied by its original
   control-probes file (controls carry no genomic annotation, so the hg19 copy
@@ -56,7 +56,7 @@ REFERENCE_CACHE_DIR = ASSETS_PATH / "reference" / f"v{__version__}" / "CNV"
 # hg38 manifests per array type (drop-in copies of the mepylome processed
 # manifests with hg38 coordinates). EPICv2 is already hg38, so it is not here
 # and falls back to the stock mepylome manifest.
-HG38_MANIFEST_DIR = PROJECT_ROOT / "data/mepylome_manifest_files_hg38"
+HG38_MANIFEST_DIR = ASSETS_PATH / "reference"
 HG38_MANIFESTS = {
     "epic": HG38_MANIFEST_DIR / "manifest-epic.hg38.csv.gz",
     "450k": HG38_MANIFEST_DIR / "manifest-450k.hg38.csv.gz",
@@ -247,6 +247,26 @@ def mepylome_get_reference(array_type: str, normals_base: Path = NORMALS_BASE):
     return out
 
 
+def mepylome_latest_reference(array_type: str, cache_dir: Path = REFERENCE_CACHE_DIR):
+    """Newest compiled ReferenceMethylData for one array type, from the assets.
+
+    For the CLI: loads the shipped pickle as-is, without looking at the normal
+    idat's or rebuilding. Newest = latest date, then largest n.
+    """
+    import pickle
+
+    def sort_key(p):
+        return (p.stem.split("__")[0], int(p.stem.rsplit("__n", 1)[1]))
+
+    candidates = sorted(Path(cache_dir).glob(f"*__normals__{array_type}__n*.pkl"), key=sort_key)
+    if not candidates:
+        raise FileNotFoundError(f"No compiled CNV reference for '{array_type}' in {cache_dir}")
+    with open(candidates[-1], "rb") as f:
+        out = pickle.load(f)
+    print(f"Reference data (asset): {candidates[-1]}")
+    return out
+
+
 def mepylome_idat_to_cnv_core(idat_grn, idat_red, array_type: str | None, reference_loader,
                                verbose: bool = True):
     """Run mepylome CNV for one IDAT pair; returns (cnv, reference_samples, array_type).
@@ -362,19 +382,15 @@ def mepylome_idat_to_cnv_database_export(basename, dataset: str, filename: str, 
     log(f"✓ {normals_file} ({len(reference_samples)} reference samples)")
 
 
-def mepylome_idat_to_cnv_cli(idat_grn, idat_red, normals_path: Path, output_base: Path,
+def mepylome_idat_to_cnv_cli(idat_grn, idat_red, output_base: Path,
                               verbose: bool = True):
     """Run mepylome CNV for one sample given explicit IDAT files and an output stem.
 
     Standalone counterpart to mepylome_idat_to_cnv_database_export, for a single
     one-off run instead of the dataset-bound pipeline:
 
-    * `normals_path` is a base directory with a per-array-type subfolder
-      (<normals_path>/<array_type>/), same convention as
-      mepylome_idat_to_cnv_database_export's normals_base. Looked up through
-      mepylome_get_reference, so it shares that cache (in-process and the
-      REFERENCE_CACHE_DIR pickle) — repeated CLI runs don't re-read every
-      normal idat from scratch.
+    * The reference is the newest compiled pickle in REFERENCE_CACHE_DIR
+      (mepylome_latest_reference); no normal idat's are needed or checked.
     * `output_base` is the full output path stem (not a directory): output is
       written to exactly "<output_base>_cnv_bins.hg38.csv",
       "<output_base>_cnv_detail.hg38.csv" and "<output_base>_normals.hg38.txt".
@@ -382,8 +398,6 @@ def mepylome_idat_to_cnv_cli(idat_grn, idat_red, normals_path: Path, output_base
     def log(msg):
         if verbose:
             print(msg)
-
-    normals_path = Path(normals_path)
 
     output_base = Path(output_base)
     bins_file = Path(f"{output_base}.cognition-v{__version__}.cnv_bins.hg38.csv")
@@ -393,15 +407,9 @@ def mepylome_idat_to_cnv_cli(idat_grn, idat_red, normals_path: Path, output_base
 
     log(f"Sample: {idat_grn}, {idat_red}")
 
-    def reference_loader(at):
-        reference_dir = normals_path / at
-        if not reference_dir.is_dir() or not any(reference_dir.iterdir()):
-            raise FileNotFoundError(f"Reference (normals) dir not found or empty: {reference_dir}")
-        return mepylome_get_reference(at, normals_path)
-
     cnv, reference_samples, array_type = mepylome_idat_to_cnv_core(
         idat_grn, idat_red, None,
-        reference_loader=reference_loader,
+        reference_loader=mepylome_latest_reference,
         verbose=verbose,
     )
 

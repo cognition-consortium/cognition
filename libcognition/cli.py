@@ -251,13 +251,12 @@ def run(idat_grn, idat_red, verbose):
     warnings = []
 
     # CNV
-    from libcognition.mepylome_helpers import NORMALS_BASE, mepylome_idat_to_cnv_cli
+    from libcognition.mepylome_helpers import mepylome_idat_to_cnv_cli
     cnv_base = Path(idat_grn).name.removesuffix(".gz").removesuffix(".idat").removesuffix("_Red").removesuffix("_Grn")
     try:
         mepylome_idat_to_cnv_cli(
                     idat_grn,
                     idat_red,
-                    NORMALS_BASE,
                     cnv_base
                      )
     except Exception as e:
