@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cognition"
+dynamic = ["version"]
+description = "Methylation-based tumor classification and survival prediction."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Youri Hoogstrate" },
+    { name = "Richard Schoonhoven" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "beartype",
+    "beautifulsoup4",
+    "click",
+    "colorama",
+    "h5py",
+    "hdf5plugin",
+    "idat-tools @ git+https://github.com/yhoogstrate/idat-tools.git",
+    "joblib",
+    "lifelines",
+    "mepylome @ git+https://github.com/brj0/mepylome.git@040730229e43a13d11991387a00744db5f439fce",
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "pycox",
+    "pymetharray @ git+https://github.com/yhoogstrate/pymetharray.git@master",
+    "pyyaml",
+    "requests",
+    "scikit-learn==1.8.0",
+    "scikit-survival==0.27.0",
+    "seaborn",
+    "tables",
+    "torch",
+    "torchtuples",
+    "torchvision",
+    "tqdm",
+    "huggingface_hub",
+    "xgboost",
+]
+
+[project.urls]
+Homepage = "https://github.com/cognition-consortium/cognition"
+Repository = "https://github.com/cognition-consortium/cognition"
+
+[project.scripts]
+cognition = "libcognition.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "libcognition.__version__" }
+
+[tool.setuptools.packages.find]
+exclude = [".*", ".venv*"]
