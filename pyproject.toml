@@ -55,6 +55,11 @@ Repository = "https://github.com/cognition-consortium/cognition"
 [project.scripts]
 cognition = "libcognition.cli:main"
 
+[tool.pytest.ini_options]
+markers = [
+    "network: needs internet access",
+]
+
 [tool.setuptools.dynamic]
 version = { attr = "libcognition.__version__" }
 
