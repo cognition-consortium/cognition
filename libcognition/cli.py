@@ -5,6 +5,7 @@ from __future__ import annotations
 import atexit
 import click
 import glob
+from itertools import cycle
 from colorama import Fore, Style
 from typing import TYPE_CHECKING
 from pathlib import Path
@@ -96,31 +97,75 @@ def colorize_helix(line):
                    for c in line)
 
 
-def render_logo():
-    """The helix with the title block beside it, as one string.
+def render_helix_beside(beside):
+    """The helix with one line of text beside each of its lines, as one string.
 
     Helix and text are joined here rather than written out as one literal, so
     the text column cannot drift when a helix line changes width (the methyl
     marks make the lines unequal).
     """
-    beside = [
-        "",
-        f"{Style.BRIGHT}COGNITION v{__version__}{Style.RESET_ALL}",
-        "",
-        highlight_acronym(TAGLINE[0]),
-        highlight_acronym(TAGLINE[1]),
-        "",
-    ]
     # padded before colouring: escape codes would otherwise count towards the
     # column width and push the text out of line
     return "\n".join((colorize_helix(h.ljust(12)) + t).rstrip()
                      for h, t in zip(HELIX, beside))
 
 
+def render_logo():
+    """The helix with the title block beside it, shown by a bare `cognition`."""
+    return render_helix_beside([
+        "",
+        f"{Style.BRIGHT}COGNITION v{__version__}{Style.RESET_ALL}",
+        "",
+        highlight_acronym(TAGLINE[0]),
+        highlight_acronym(TAGLINE[1]),
+        "",
+    ])
+
+
+def render_run_banner(idat_grn, idat_red):
+    """The helix with the input files beside it, shown at the start of `run`.
+
+    The files rather than the tagline, so a saved log of a run says which
+    sample it belongs to in its first lines.
+    """
+    return render_helix_beside([
+        "",
+        f"{Style.BRIGHT}COGNITION v{__version__}{Style.RESET_ALL}  {Style.DIM}run{Style.RESET_ALL}",
+        "",
+        f"Grn : {Path(idat_grn).name}",
+        f"Red : {Path(idat_red).name}",
+        "",
+    ])
+
+
+# The base pairs the section rules of `run` step through, one per section, so
+# consecutive sections are told apart by more than their title.
+SECTION_PAIRS = cycle(["A--T", "G--C", "T--A", "C--G"])
+SECTION_WIDTH = 72
+
+
+def section(title):
+    """Print a rule that opens a section of the `run` output."""
+    head = f"---{next(SECTION_PAIRS)}---  "
+    tail = "-" * max(SECTION_WIDTH - len(head) - len(title) - 2, 2)
+    # the title is kept out of colorize_helix: its capitals would be taken for
+    # bases (the C of CNV)
+    click.echo(f"\n{colorize_helix(head)}{Style.BRIGHT}{title}{Style.RESET_ALL}  "
+               f"{Style.DIM}{tail}{Style.RESET_ALL}")
+
+
 # Printed on the way out. That covers every subcommand, a run that crashes, and
 # `--help` -- which click renders and exits on its own, before any code here
-# gets a turn.
-atexit.register(print, "\n" + DISCLAIMER)
+# gets a turn. The warning box is dimmed like the backbone of the helix, line by
+# line as the section rules are, so the escape codes never span a line break;
+# the credits below it keep the normal colour. Through click.echo so the escape
+# codes are left out when the output is not a terminal.
+def render_disclaimer():
+    return "\n".join(f"{Style.DIM}{line}{Style.RESET_ALL}" if line.startswith(("-", "!")) else line
+                     for line in DISCLAIMER.split("\n"))
+
+
+atexit.register(click.echo, "\n" + render_disclaimer())
 
 
 @click.group(invoke_without_command=True)
@@ -239,7 +284,12 @@ def run(idat_grn, idat_red, verbose):
 
     import pandas as pd
 
+    click.echo("\n" + render_run_banner(idat_grn, idat_red))
+
+    section("Reading IDATs")
     mvalues, array_type, sentrix_id = idat_to_mvalues(idat_grn, idat_red)
+    click.echo(f"Array type : {array_type}")
+    click.echo(f"Sentrix ID : {sentrix_id}")
 
     default_stem = f"{sentrix_id}.cognition-v{__version__}"
     out = {}
@@ -250,7 +300,7 @@ def run(idat_grn, idat_red, verbose):
     subtype_prediction = None
     warnings = []
 
-    # CNV
+    section("CNV")
     from libcognition.mepylome_helpers import mepylome_idat_to_cnv_cli
     cnv_base = Path(idat_grn).name.removesuffix(".gz").removesuffix(".idat").removesuffix("_Red").removesuffix("_Grn")
     try:
@@ -271,7 +321,7 @@ def run(idat_grn, idat_red, verbose):
     cnv_detail_file = Path(f"{cnv_base}.cognition-v{__version__}.cnv_detail.hg38.csv")
 
 
-    # other stuff
+    section("Predictors")
     predictors = scan_for_local_models()
 
     if verbose:
@@ -361,6 +411,7 @@ def run(idat_grn, idat_red, verbose):
 
     # outside the endpoint loop: every endpoint has to have been seen before the
     # report is drawn, or the panels of whichever ones came last are missing
+    section("Report")
     survival_data = out.get(EndPoint("overall survival"))
 
     if grade_curve_members:
