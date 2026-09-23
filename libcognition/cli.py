@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import atexit
 import click
 import glob
 from typing import TYPE_CHECKING
 from pathlib import Path
 
-from . import __version__, ASSETS_PATH, HUGGINGFACE_URL
+from . import __version__, ASSETS_PATH, DISCLAIMER, HUGGINGFACE_URL
 
 if TYPE_CHECKING:
     import numpy as np
@@ -49,27 +50,32 @@ def scan_for_local_models() -> list[str]:
 
 
 
+# Printed on the way out. That covers every subcommand, a run that crashes, and
+# `--help` -- which click renders and exits on its own, before any code here
+# gets a turn.
+atexit.register(print, "\n" + DISCLAIMER)
+
+
 @click.group(invoke_without_command=True)
 @click.version_option(__version__)
 @click.pass_context
 def main(ctx):
     if ctx.invoked_subcommand is not None:
         return
-    click.echo("""
-Command-line interface for (lib)cognition
+    click.echo(f"""
+   A--T
+   A--T       COGNITION v{__version__}
+  *C--G
+   G--C*     Objective DNA methylation based overall
+   T--A       survival prediction of IDH mutant gliomas
+   A--T
 
-Based on Illumina DNA methylation arrays, this appliciation can predict:
+Based on Illumina DNA methylation arrays, this application can predict:
 
-    - prognosis of several types of brain tumor(s)
-    - the sex of the sample
-    - the tumor subtype needed for plotting appropriate reference data
-      or warn if for the predicted subtype no survival data was fitted
-
-Written, developed and (C) by Dr. Youri Hoogstate and Dr. Richard Schoonhoven
-
-!!! This software is intended for research purposes only and has not !!!
-!!!   been validated for clinical decision-making or patient care.   !!!
-    """)
+  - prognosis of several types of brain tumor(s)
+  - the sex of the sample
+  - the tumor subtype needed for plotting appropriate reference data
+    or warn if for the predicted subtype no survival data was fitted""")
 
 
 @main.command(name="list")

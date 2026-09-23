@@ -12,15 +12,12 @@ def _suppress_logging():
         logger.setLevel(logging.WARNING)
 
 
-_suppress_logging()
+_suppress_logging() # suppresses some weird import errors
 
 
 __version__ = '1.0.4'
 
-# Repo root: assets/ and data/ sit next to the package. Anchored on the module
-# location rather than the cwd, so the data paths derived from it keep resolving
-# when a caller is started from elsewhere (the CLI is run with the output dir as
-# its working directory).
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 #ASSETS_PATH = Path(__file__).parent.parent / "assets"
@@ -29,15 +26,26 @@ ASSETS_PATH = PROJECT_ROOT / "assets"
 GITHUB_URL = "https://github.com/cognition-consortium/cognition"
 HUGGINGFACE_URL = "https://huggingface.co/ErasmusMC-Neuro-Oncology/cognition"
 
+
+DISCLAIMER = (
+    "\n"
+    "------------------------------------------------------------------------\n"
+    "!!! This software is intended for research purposes only and has not !!!\n"
+    "!!!   been validated for clinical decision-making or patient care.   !!!\n"
+    "------------------------------------------------------------------------\n"
+    "\n"
+    "Written, developed and (C) by Dr. Youri Hoogstate and Dr. Richard Schoonhoven\n"
+    f"<{GITHUB_URL}>"
+)
+
+
 DAYS_PER_YEAR = 365.24219
 MAX_FOLLOW_UP_YEARS = 26.5
 
 
-# Public name -> submodule that defines it. Submodules are only imported the
-# first time one of their names is actually accessed (PEP 562 module
-# __getattr__), so e.g. `import libcognition; libcognition.HUGGINGFACE_URL`
-# never has to load the heavy ML stack (torch, pycox, sksurv, lifelines)
-# pulled in by custom_transformers/notebook_functions.
+
+# trick for more efficient / lazy loading, otherwise all cude stuff is loaded even when listing models etc.
+
 _LAZY_ATTRS = {
     'database': '.database',
     'idat': '.database',
@@ -154,6 +162,7 @@ __all__ = [
     'PROJECT_ROOT',
     'ASSETS_PATH',
     'GITHUB_URL',
+    'DISCLAIMER',
     'HUGGINGFACE_URL',
     'DAYS_PER_YEAR',
     'MAX_FOLLOW_UP_YEARS',
