@@ -23,7 +23,7 @@ A Python package for methylation-based tumor classification and survival predict
 
 ## Requirements
 
-- **Python**: 3.10 or higher
+- **Python**: 3.12 or higher
 - **PyTorch**: For deep learning models (CPU or GPU)
   - GPU (optional): NVIDIA GPU with CUDA for accelerated deep learning
 - **Dependencies**: See `pyproject.toml` for full list (lifelines, scikit-learn, scikit-survival, pycox, etc.)

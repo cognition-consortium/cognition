@@ -7,7 +7,7 @@ name = "cognition"
 dynamic = ["version"]
 description = "Methylation-based tumor classification and survival prediction."
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
     { name = "Youri Hoogstrate" },
     { name = "Richard Schoonhoven" },
@@ -16,8 +16,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
