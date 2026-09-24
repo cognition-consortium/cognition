@@ -22,7 +22,6 @@ init(autoreset=True)
 
 
 from . import ASSETS_PATH, DAYS_PER_YEAR, MAX_FOLLOW_UP_YEARS
-from .utils import format_size
 
 
 def load_model_bundle(path):
@@ -187,6 +186,10 @@ class Predictor:
     def compiled(self) -> dict:
         """The joblib bundle (pipeline, label encoder, ...), loaded on demand."""
         if self._compiled is None:
+            # deferred: utils.py drags in mepylome/pymetharray, which `cognition
+            # list` has no use for.
+            from .utils import format_size
+
             path = Path(f"{ASSETS_PATH}/models/{self.data['model']}")
             # Announced because this is where the wait is: a 1.2 GB bundle off a
             # network filesystem takes long enough that silence looks like a hang.
