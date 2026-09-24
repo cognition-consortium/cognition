@@ -62,7 +62,7 @@ pip install --editable .
 ### Download latest prediction models
 
 ```bash
-cognition pull  # Download latest models
+cognition pull  # Download latest models and references
 ```
 
 ### Verify Installation

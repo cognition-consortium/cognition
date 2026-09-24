@@ -27,15 +27,12 @@ def load_predictor(json_file: str) -> Predictor:
 
 
 def scan_for_local_models() -> list[str]:
-    """Glob the predictor '.info.json' files under ASSETS_PATH."""
+    """Scans for compiled prediction model (*.info.json) under ASSETS_PATH."""
     out = {}
 
     glob_path = f"{ASSETS_PATH}/models/v{__version__}/"
     print(f"Scanning for models files under: {glob_path}")
 
-    # sorted, because glob follows the filesystem: without it the order the
-    # predictors come back in differs per machine, and anything downstream that
-    # depends on which one comes last silently differs with it
     json_files = sorted(glob.glob(f"{glob_path}/*/*/*.info.json"))
     print(f"Found {len(json_files)} predictor(s)\n")
 
@@ -122,30 +119,25 @@ def render_logo():
     ])
 
 
-def render_run_banner(idat_grn, idat_red):
-    """The helix with the input files beside it, shown at the start of `run`.
-
-    The files rather than the tagline, so a saved log of a run says which
-    sample it belongs to in its first lines.
-    """
+def render_banner(command, lines):
+    """The helix with the subcommand and two lines of its own beside it."""
     return render_helix_beside([
         "",
-        f"{Style.BRIGHT}COGNITION v{__version__}{Style.RESET_ALL}  {Style.DIM}run{Style.RESET_ALL}",
+        f"{Style.BRIGHT}COGNITION v{__version__}{Style.RESET_ALL}  {Style.DIM}{command}{Style.RESET_ALL}",
         "",
-        f"Grn : {Path(idat_grn).name}",
-        f"Red : {Path(idat_red).name}",
+        *lines,
         "",
     ])
 
 
-# The base pairs the section rules of `run` step through, one per section, so
+# The base pairs the section rules step through, one per section, so
 # consecutive sections are told apart by more than their title.
 SECTION_PAIRS = cycle(["A--T", "G--C", "T--A", "C--G"])
 SECTION_WIDTH = 72
 
 
 def section(title):
-    """Print a rule that opens a section of the `run` output."""
+    """Print a rule that opens a section of the output."""
     head = f"---{next(SECTION_PAIRS)}---  "
     tail = "-" * max(SECTION_WIDTH - len(head) - len(title) - 2, 2)
     # the title is kept out of colorize_helix: its capitals would be taken for
@@ -154,18 +146,19 @@ def section(title):
                f"{Style.DIM}{tail}{Style.RESET_ALL}")
 
 
-# Printed on the way out. That covers every subcommand, a run that crashes, and
-# `--help` -- which click renders and exits on its own, before any code here
-# gets a turn. The warning box is dimmed like the backbone of the helix, line by
-# line as the section rules are, so the escape codes never span a line break;
-# the credits below it keep the normal colour. Through click.echo so the escape
-# codes are left out when the output is not a terminal.
+# The warning box is dimmed like the backbone of the helix, line by line as the
+# section rules are, so the escape codes never span a line break; the credits
+# below it keep the normal colour.
 def render_disclaimer():
     return "\n".join(f"{Style.DIM}{line}{Style.RESET_ALL}" if line.startswith(("-", "!")) else line
                      for line in DISCLAIMER.split("\n"))
 
 
-atexit.register(click.echo, "\n" + render_disclaimer())
+def format_size(n_bytes):
+    for unit in ["B", "kB", "MB", "GB"]:
+        if n_bytes < 1000 or unit == "GB":
+            return f"{n_bytes:.1f} {unit}" if unit != "B" else f"{n_bytes} B"
+        n_bytes /= 1000
 
 
 @click.group(invoke_without_command=True)
@@ -191,7 +184,8 @@ Based on Illumina DNA methylation arrays, this application can predict:
 
 {commands}
 
-Run 'cognition --help' for all options.""")
+Run 'cognition --help' for all options.
+{render_disclaimer()}""")
 
 
 @main.command(name="list")
@@ -259,21 +253,56 @@ def list_():
 @main.command(name="pull")
 def pull_():
     """Pull latest model builds and references from Hugging Face"""
-    from .utils import pull_from_huggingface
+    from huggingface_hub import HfApi, hf_hub_download
+    from huggingface_hub.errors import EntryNotFoundError
+    from huggingface_hub.hf_api import RepoFile
+    from huggingface_hub.utils import tqdm
 
-    print(f"Pull latest model builds and references from Hugging Face: {HUGGINGFACE_URL} for version v{__version__}")
-    pull_from_huggingface(
-        HUGGINGFACE_URL,
-        ASSETS_PATH,
-        remote_subfolders=[
-            f"models/v{__version__}/",
-            f"embeddings/v{__version__}/",
-            f"reference/v{__version__}/",
-        ],
-        # the manifests and shared bins, which do not change with the version;
-        # the other versions' subfolders stay behind
-        remote_flat_folders=["reference/"],
-    )
+    class TransientBar(tqdm):
+        """Hugging Face's download bar, cleared once the file is in, so only the
+        status line printed after it remains."""
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **{**kwargs, "leave": False})
+
+    repo_id = HUGGINGFACE_URL.removeprefix("https://huggingface.co/")
+    click.echo("\n" + render_banner("pull", [f"Repo : {repo_id}", f"Into : {ASSETS_PATH}"]))
+
+    # (folder, including its subfolders). Of reference/ itself only the files
+    # directly in it: the manifests and shared bins, which do not change with
+    # the version, while the other versions' subfolders stay behind.
+    folders = [
+        ("reference", False),
+        (f"reference/v{__version__}", True),
+        (f"models/v{__version__}", True),
+        (f"embeddings/v{__version__}", True),
+    ]
+
+    api = HfApi()
+    n_files = n_downloaded = bytes_downloaded = 0
+    for folder, recursive in folders:
+        section(folder)
+        try:
+            files = [f for f in api.list_repo_tree(repo_id, folder, recursive=recursive)
+                     if isinstance(f, RepoFile)]
+        except EntryNotFoundError:
+            click.echo(f"  {Style.DIM}not on Hugging Face{Style.RESET_ALL}")
+            continue
+
+        width = max((len(f.path) - len(folder) - 1 for f in files), default=0)
+        for f in files:
+            if hf_hub_download(repo_id, f.path, local_dir=ASSETS_PATH, dry_run=True).will_download:
+                hf_hub_download(repo_id, f.path, local_dir=ASSETS_PATH, tqdm_class=TransientBar)
+                status = "downloaded"
+                n_downloaded += 1
+                bytes_downloaded += f.size
+            else:
+                status = "up to date"
+            click.echo(f"  {f.path.removeprefix(folder + '/'):<{width}}  {format_size(f.size):>9}  "
+                       f"{Style.DIM}{status}{Style.RESET_ALL}")
+        n_files += len(files)
+
+    click.echo(f"\n{n_files} files, {n_downloaded} downloaded ({format_size(bytes_downloaded)}), "
+               f"{n_files - n_downloaded} up to date")
 
 
 
@@ -291,7 +320,15 @@ def run(idat_grn, idat_red, verbose):
 
     import pandas as pd
 
-    click.echo("\n" + render_run_banner(idat_grn, idat_red))
+    # Printed on the way out, so also after a run that crashes. Through
+    # click.echo so the escape codes are left out when the output is not a
+    # terminal.
+    atexit.register(click.echo, "\n" + render_disclaimer())
+
+    # the input files beside the helix, so a saved log of a run says which
+    # sample it belongs to in its first lines
+    click.echo("\n" + render_banner("run", [f"Grn : {Path(idat_grn).name}",
+                                            f"Red : {Path(idat_red).name}"]))
 
     section("Reading IDATs")
     mvalues, array_type, sentrix_id = idat_to_mvalues(idat_grn, idat_red)

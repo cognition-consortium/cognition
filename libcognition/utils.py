@@ -22,8 +22,6 @@ import pandas as pd
 
 
 from pathlib import Path
-from urllib.parse import urlparse
-from huggingface_hub import snapshot_download
 
 
 from beartype import beartype
@@ -44,7 +42,6 @@ __all__ = [
     'epicv2_to_epic',
     'gdc_client_download',
     'is_gz_file',
-    'pull_from_huggingface',
 ]
 
 
@@ -379,91 +376,4 @@ def is_gz_file(filepath):
         first_bytes = test_f.read(2)
         print(first_bytes)
         return first_bytes == b'\x1f\x8b'
-
-
-
-
-def pull_from_huggingface(
-    huggingface_url: str,
-    folder_path: str,
-    remote_subfolders: list[str] | None = None,
-    remote_flat_folders: list[str] | None = None,
-    revision: str | None = None,
-) -> Path:
-    """
-    Download (pull-only) een HuggingFace repo (of subfolder daarvan) naar een lokale folder.
-
-    Parameters
-    ----------
-    huggingface_url : str
-        Volledige URL naar het HF object (model of dataset).
-    folder_path : str
-        Lokale map waar de repo naartoe gedownload wordt.
-    remote_subfolders : list[str], optional
-        Alleen deze subfolders binnen de remote repo pullen, inclusief alles
-        eronder, bv. ["models/v1.2.0/"]. Structuur binnen local_dir blijft
-        behouden (dus je krijgt <folder_path>/models/v1.2.0/... i.p.v. alleen
-        de bestanden los).
-    remote_flat_folders : list[str], optional
-        Van deze folders alleen de bestanden die er direct in staan pullen,
-        zonder de subfolders, bv. ["reference/"].
-
-    Zonder remote_subfolders en remote_flat_folders wordt de hele repo gepulld.
-    revision : str, optional
-        Specifieke branch/tag/commit (default: main).
-
-    Returns
-    -------
-    Path naar de lokale download-directory.
-    """
-    parsed = urlparse(huggingface_url)
-    parts = [p for p in parsed.path.split("/") if p]
-
-    repo_type = "model"
-    if parts and parts[0] in ("datasets", "spaces"):
-        repo_type = parts[0].rstrip("s")
-        parts = parts[1:]
-
-    if "tree" in parts or "blob" in parts:
-        idx = parts.index("tree") if "tree" in parts else parts.index("blob")
-        if revision is None and len(parts) > idx + 1:
-            revision = parts[idx + 1]
-        parts = parts[:idx]
-
-    if len(parts) < 2:
-        raise ValueError(f"Kan repo_id niet uit URL halen: {huggingface_url}")
-
-    repo_id = "/".join(parts[:2])
-
-    local_dir = Path(folder_path)
-    local_dir.mkdir(parents=True, exist_ok=True)
-
-    subs = [sub.strip("/") for sub in remote_subfolders or []]
-    flats = [flat.strip("/") for flat in remote_flat_folders or []]
-
-    # (allow_patterns, ignore_patterns) per snapshot_download-call
-    downloads = []
-    if not subs and not flats:
-        downloads.append((None, None))
-    if subs:
-        downloads.append(([f"{sub}/*" for sub in subs], None))
-    if flats:
-        # Een aparte call, want de patronen zijn fnmatch en daarin loopt '*' ook
-        # door '/' heen: "reference/*" alleen zou alle subfolders meenemen, en
-        # het ignore-patroon dat dat tegenhoudt zou in een gedeelde call ook
-        # de remote_subfolders onder die folder wegfilteren.
-        downloads.append(([f"{flat}/*" for flat in flats],
-                          [f"{flat}/*/*" for flat in flats]))
-
-    for allow_patterns, ignore_patterns in downloads:
-        snapshot_download(
-            repo_id=repo_id,
-            repo_type=repo_type,
-            revision=revision,
-            local_dir=str(local_dir),
-            allow_patterns=allow_patterns,
-            ignore_patterns=ignore_patterns,
-        )
-
-    return local_dir
 
