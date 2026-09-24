@@ -28,24 +28,31 @@ dependencies = [
     "idat-tools @ git+https://github.com/yhoogstrate/idat-tools.git",
     "joblib",
     "lifelines",
+    "matplotlib",
     "mepylome @ git+https://github.com/brj0/mepylome.git@040730229e43a13d11991387a00744db5f439fce",
     "numpy",
-    "openpyxl",
     "pandas",
+    "pyarrow",
     "pycox",
     "pymetharray @ git+https://github.com/yhoogstrate/pymetharray.git@master",
-    "pyyaml",
+    "pyranges1",
     "requests",
     "scikit-learn==1.8.0",
     "scikit-survival==0.27.0",
+    "scipy",
     "seaborn",
+    "statsmodels",
     "tables",
     "torch",
     "torchtuples",
-    "torchvision",
     "tqdm",
     "huggingface_hub",
     "xgboost",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
 ]
 
 [project.urls]
