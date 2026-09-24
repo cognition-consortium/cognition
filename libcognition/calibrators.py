@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
 import json
-from pathlib import Path
 import numpy as np
 from scipy import stats
 from scipy.interpolate import interp1d
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
-ASSETS_PATH = Path(__file__).resolve().parent.parent / "assets"
+from . import ASSETS_PATH
 
 
 class SurvivalCalibrator:
