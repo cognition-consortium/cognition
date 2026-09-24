@@ -258,14 +258,21 @@ def list_():
 
 @main.command(name="pull")
 def pull_():
-    """Pull latest model builds from Hugging Face"""
+    """Pull latest model builds and references from Hugging Face"""
     from .utils import pull_from_huggingface
 
-    print(f"Pull latest model builds from Hugging Face: {HUGGINGFACE_URL} for version v{__version__}")
+    print(f"Pull latest model builds and references from Hugging Face: {HUGGINGFACE_URL} for version v{__version__}")
     pull_from_huggingface(
         HUGGINGFACE_URL,
         ASSETS_PATH,
-        remote_subfolder=f"models/v{__version__}/",
+        remote_subfolders=[
+            f"models/v{__version__}/",
+            f"embeddings/v{__version__}/",
+            f"reference/v{__version__}/",
+        ],
+        # the manifests and shared bins, which do not change with the version;
+        # the other versions' subfolders stay behind
+        remote_flat_folders=["reference/"],
     )
 
 
