@@ -72,10 +72,6 @@ HELIX = [
 ]
 
 
-# A backronym: the capitals spell COGNITION, and they are the only capitals in
-# it, which is what lets highlight_acronym() find them by case alone. The colour
-# is an accent, not the carrier -- it is stripped when output is not a terminal,
-# so the capitals have to stand on their own.
 TAGLINE = [
     "isoCitrate dehydrOGenase mutaNt glIoma",
     "objecTIve tumOr gradiNg",
@@ -152,13 +148,6 @@ def section(title):
 def render_disclaimer():
     return "\n".join(f"{Style.DIM}{line}{Style.RESET_ALL}" if line.startswith(("-", "!")) else line
                      for line in DISCLAIMER.split("\n"))
-
-
-def format_size(n_bytes):
-    for unit in ["B", "kB", "MB", "GB"]:
-        if n_bytes < 1000 or unit == "GB":
-            return f"{n_bytes:.1f} {unit}" if unit != "B" else f"{n_bytes} B"
-        n_bytes /= 1000
 
 
 @click.group(invoke_without_command=True)
@@ -257,6 +246,7 @@ def pull_():
     from huggingface_hub.errors import EntryNotFoundError
     from huggingface_hub.hf_api import RepoFile
     from huggingface_hub.utils import tqdm
+    from .utils import format_size
 
     class TransientBar(tqdm):
         """Hugging Face's download bar, cleared once the file is in, so only the

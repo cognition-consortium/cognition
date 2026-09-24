@@ -42,6 +42,7 @@ __all__ = [
     'epicv2_to_epic',
     'gdc_client_download',
     'is_gz_file',
+    'format_size',
 ]
 
 
@@ -376,4 +377,11 @@ def is_gz_file(filepath):
         first_bytes = test_f.read(2)
         print(first_bytes)
         return first_bytes == b'\x1f\x8b'
+
+
+def format_size(n_bytes):
+    for unit in ["B", "kB", "MB", "GB"]:
+        if n_bytes < 1000 or unit == "GB":
+            return f"{n_bytes:.1f} {unit}" if unit != "B" else f"{n_bytes} B"
+        n_bytes /= 1000
 

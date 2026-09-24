@@ -22,6 +22,7 @@ init(autoreset=True)
 
 
 from . import ASSETS_PATH, DAYS_PER_YEAR, MAX_FOLLOW_UP_YEARS
+from .utils import format_size
 
 
 def load_model_bundle(path):
@@ -189,8 +190,8 @@ class Predictor:
             path = Path(f"{ASSETS_PATH}/models/{self.data['model']}")
             # Announced because this is where the wait is: a 1.2 GB bundle off a
             # network filesystem takes long enough that silence looks like a hang.
-            size = path.stat().st_size / 1024 ** 3 if path.exists() else 0.0
-            print(f"Loading model bundle ({size:.1f} GB): {self.data['model']}", flush=True)
+            size = format_size(path.stat().st_size) if path.exists() else "0 B"
+            print(f"Loading model bundle ({size}): {self.data['model']}", flush=True)
             self._compiled = load_model_bundle(str(path))
         return self._compiled
 

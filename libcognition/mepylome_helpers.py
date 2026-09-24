@@ -41,6 +41,7 @@ import numpy as np
 import pandas as pd
 
 from . import ASSETS_PATH, PROJECT_ROOT, __version__
+from .utils import format_size
 
 # Output / input locations (match libcognition.database paths).
 CNV_OUTPUT_BASE = PROJECT_ROOT / "data/DNA_methylation/CNV-mepylome"
@@ -366,13 +367,13 @@ def mepylome_idat_to_cnv_database_export(basename, dataset: str, filename: str, 
 
     if getattr(cnv, 'bins', None) is not None:
         cnv.bins.to_csv(bins_file)
-        log(f"✓ {bins_file} ({bins_file.stat().st_size / 1024:.1f} KB)")
+        log(f"✓ {bins_file} ({format_size(bins_file.stat().st_size)})")
     else:
         print("Warning: bins not available", file=sys.stderr)
 
     if getattr(cnv, 'detail', None) is not None:
         cnv.detail.to_csv(detail_file)
-        log(f"✓ {detail_file} ({detail_file.stat().st_size / 1024:.1f} KB)")
+        log(f"✓ {detail_file} ({format_size(detail_file.stat().st_size)})")
     else:
         print("Warning: detail not available", file=sys.stderr)
 
@@ -418,13 +419,13 @@ def mepylome_idat_to_cnv_cli(idat_grn, idat_red, output_base: Path,
 
     if getattr(cnv, 'bins', None) is not None:
         cnv.bins.to_csv(bins_file)
-        log(f"✓ {bins_file} ({bins_file.stat().st_size / 1024:.1f} KB)")
+        log(f"✓ {bins_file} ({format_size(bins_file.stat().st_size)})")
     else:
         print("Warning: bins not available", file=sys.stderr)
 
     if getattr(cnv, 'detail', None) is not None:
         cnv.detail.to_csv(detail_file)
-        log(f"✓ {detail_file} ({detail_file.stat().st_size / 1024:.1f} KB)")
+        log(f"✓ {detail_file} ({format_size(detail_file.stat().st_size)})")
     else:
         print("Warning: detail not available", file=sys.stderr)
 
