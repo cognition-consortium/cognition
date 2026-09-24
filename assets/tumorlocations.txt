@@ -1,0 +1,78 @@
+# Tumor location hierarchy for DNA methylation-based classification.
+# Specific vertebral levels and laterality are collapsed —
+# these are not distinguishable by DNA methylation.
+
+posterior fossa
+├── brain stem
+│   ├── pons
+│   ├── medulla oblongata
+│   └── cerebellar peduncles
+├── cerebellum
+│   ├── hemispheric
+│   └── vermis
+├── cerebello-pontine angle
+├── meningeal
+└── ventricle IV
+
+supratentorial
+├── hemispheric
+│   ├── frontal
+│   ├── temporal
+│   ├── parietal
+│   ├── occipital
+│   └── corpus callosum
+├── diencephalic
+│   ├── thalamic
+│   ├── hypothalamic
+│   ├── basal ganglia
+│   ├── pineal region
+│   └── optic tract
+├── intraventricular
+│   ├── ventricle II
+│   └── ventricle III
+├── meningeal
+│   └── falx
+└── sellar region
+    ├── suprasellar
+    ├── intrasellar
+    └── infundibulum
+
+spinal
+├── intramedullary
+│   ├── cervical
+│   ├── thoracic
+│   ├── lumbar
+│   └── sacral
+├── extramedullary intradural
+│   ├── cervical
+│   ├── thoracic
+│   ├── lumbar
+│   └── cauda equina
+├── extradural
+│   ├── cervical
+│   ├── thoracic
+│   └── lumbar
+└── meningeal
+    ├── cervical
+    ├── thoracic
+    └── lumbar
+
+peripheral nerve
+├── cranial nerve
+│   ├── I
+│   ├── II
+│   ├── V
+│   └── VIII
+├── spinal root
+├── plexus
+└── dermal
+
+mesenchyme
+├── cranium
+│   ├── clivus
+│   ├── frontobasal
+│   ├── nasal cavity
+│   └── intraocular
+├── thorax
+├── abdomen
+└── pelvis

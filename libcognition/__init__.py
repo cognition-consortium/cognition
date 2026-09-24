@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import importlib
+import os
 from pathlib import Path
 
 import logging
@@ -20,8 +21,19 @@ __version__ = '1.0.4'
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-#ASSETS_PATH = Path(__file__).parent.parent / "assets"
-ASSETS_PATH = PROJECT_ROOT / "assets"
+
+def _resolve_assets_path():
+    # 1. explicit override, e.g. to share one download between projects
+    if os.environ.get("COGNITION_ASSETS_PATH"):
+        return Path(os.environ["COGNITION_ASSETS_PATH"]).expanduser().resolve()
+    # 2. source checkout / editable install: <repo>/assets
+    if (PROJECT_ROOT / "assets").is_dir():
+        return PROJECT_ROOT / "assets"
+    # 3. regular install: next to the package, i.e. site-packages/libcognition/assets
+    return Path(__file__).resolve().parent / "assets"
+
+
+ASSETS_PATH = _resolve_assets_path()
 
 GITHUB_URL = "https://github.com/cognition-consortium/cognition"
 HUGGINGFACE_URL = "https://huggingface.co/ErasmusMC-Neuro-Oncology/cognition"
